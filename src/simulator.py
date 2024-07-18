@@ -52,7 +52,7 @@ Implement this class to create a custom physics engine.
 class PhysicsEngine:
 
     def simulate(self,
-        delta_ms: float,
+        delta_seconds: float,
         environment_state: EnvironmentState,
         robot_setpoint_state: RobotSetpointState,
         robot_kinematic_state: RobotKinematicState,
@@ -82,14 +82,18 @@ class Simulation:
         delta_seconds: float, # The number of seconds between each simulation step
         debug: bool = False
     ):
-
         self.mode = mode
         self.environment_state = initial_environment_state
         self.physics_engine = physics_engine
         self.debug = debug
 
+        # After self.start_simulation() has been called and before self.stop_simulation()
         self.running = False
+
+        # Whether self.start_simulation() has been called before
         self.has_started_running = False
+
+        # The thread object for real-time simulation only
         self.realtime_simulation_thread = None
 
         # Initialize first timestep of the simulation
