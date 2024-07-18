@@ -66,6 +66,10 @@ class SimulationMode(Enum):
 
 """
 Runs a simulation of the robot in the environment using the physics engine.
+
+In REALTIME mode, the simulation runs in a separate thread and simulates the robot in real-time.
+In ASYNC mode, the simulation runs in the same thread as the main program and simulates the robot
+as fast as possible whenever Simulation has control of the only thread.
 """
 class Simulation:
 
@@ -123,9 +127,8 @@ class Simulation:
     def _run_simulation_in_thread(self):
         """
         Run the simulation in a separate thread in real-time.
+        Only used in REALTIME mode.
         """
-        
-
 
         # Run the simulation in real-time
         while self.running:
@@ -142,6 +145,7 @@ class Simulation:
         """
         In the elapsed time since the last call to catch_up_simulation, execute as many simulation steps as necessary
         to catch up to the current time.
+        Only used in ASYNC mode.
         """
 
         # Calculate the elapsed time since the last call to catch_up_simulation in seconds
@@ -164,7 +168,8 @@ class Simulation:
 
     def start_simulation(self):
         """
-        At the first catch_up_simulation call, all the steps from this point to the call will be simulated.
+        If ASYNC, At the first catch_up_simulation call, all the steps from this point to the call will be simulated.
+        If REALTIME, the simulation will start in a separate thread.
         """
         if self.has_started_running:
             raise Exception("Simulation cannot be started again after it has already started.")
@@ -185,7 +190,7 @@ class Simulation:
     def simulation_input(self, input_function: Callable[[RobotSetpointState], None]):
         """
         Takes in a function that modifies the robot's setpoint state in-place.
-        Executes all the previous simulation steps that would have happened before this input.
+        If ASYNC, executes all the previous simulation steps that would have happened before this input.
         """
 
         if self.mode == SimulationMode.ASYNC:
@@ -198,7 +203,7 @@ class Simulation:
     def simulation_sensor(self, sensor_function: Callable[[RobotKinematicState], any]):
         """
         Takes in a function that reads the robot's kinematic state and returns a value.
-        Executes all the previous simulation steps that would have happened before this sensor read.
+        If ASYNC, executes all the previous simulation steps that would have happened before this sensor read.
         """
 
         if self.mode == SimulationMode.ASYNC:
