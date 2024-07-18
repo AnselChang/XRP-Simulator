@@ -1,4 +1,4 @@
-from src.simulator import EnvironmentState, PhysicsEngine, RobotKinematicState, RobotSetpointState, Simulation, SimulationMode
+from src.simulator import EnvironmentState, PhysicsEngine, RobotKinematicState, RobotSetpointState, Simulator, SimulationMode
 
 from dataclasses import dataclass
 import time
@@ -34,7 +34,7 @@ class TestPhysicsEngine(PhysicsEngine):
         return new_kinematic_state
 
 
-simulation = Simulation(
+simulation = Simulator(
     mode=SimulationMode.REALTIME,
     initial_environment_state=TestEnvironmentState(0),
     initial_robot_setpoint_state=TestRobotSetpointState(0),

@@ -71,7 +71,7 @@ In REALTIME mode, the simulation runs in a separate thread and simulates the rob
 In ASYNC mode, the simulation runs in the same thread as the main program and simulates the robot
 as fast as possible whenever Simulation has control of the only thread.
 """
-class Simulation:
+class Simulator:
 
     def __init__(self,
         mode: SimulationMode,
@@ -150,8 +150,7 @@ class Simulation:
             # Wait until the next simulation step
             if time_to_wait > 0:
                 time.sleep(time_to_wait)
-            
-            
+
 
     def _catch_up_simulation(self):
         """
