@@ -134,15 +134,20 @@ class Simulation:
         Only used in REALTIME mode.
         """
 
-        # Run the simulation in real-time
+        # Record the start time of the simulation, so that time deltas are always relative to the start,
+        # to avoid drift in the simulation.
         self.start_time = time.time()
+
+        # Run the simulation in real-time
         timestep = 0
         while self.running:
             self._execute_simulation_step()
             
-            # Wait until the next simulation step
+            # Calculate the time to wait until the next simulation step
             timestep += 1
             time_to_wait = self.start_time + timestep * self.delta_seconds - time.time()
+
+            # Wait until the next simulation step
             if time_to_wait > 0:
                 time.sleep(time_to_wait)
             
