@@ -143,11 +143,20 @@ class Simulation:
         # Catch up the simulation to the current time
         self._catch_up_simulation()
 
-        # Get the last simulation step
-        last_step = self.simulation_steps[-1]
-
         # Modify the setpoint state
-        input_function(last_step.robot_setpoint_state)
+        input_function(self.current_simulation_step.robot_setpoint_state)
+
+    def simulation_sensor(self, sensor_function: Callable[[RobotKinematicState], any]):
+        """
+        Takes in a function that reads the robot's kinematic state and returns a value.
+        Executes all the previous simulation steps that would have happened before this sensor read.
+        """
+
+        # Catch up the simulation to the current time
+        self._catch_up_simulation()
+
+        # Read the kinematic state
+        return sensor_function(self.current_simulation_step.robot_kinematic_state)
 
     def stop_simulation(self):
         """

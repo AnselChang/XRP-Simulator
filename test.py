@@ -45,6 +45,8 @@ simulation = Simulation(
 def set_delta(state: TestRobotSetpointState, delta: int):
     state.delta = delta
  
+def get_value(state: TestRobotKinematicState):
+    return state.value
 
 simulation.start_simulation()
 time.sleep(2)
@@ -53,12 +55,16 @@ simulation.simulation_input(lambda state: set_delta(state, 4))
 simulation.simulation_input(lambda state: set_delta(state, 5))
 simulation.simulation_input(lambda state: set_delta(state, 2))
 time.sleep(1)
+sensor_value = simulation.simulation_sensor(lambda state: get_value(state))
+time.sleep(1)
 simulation.simulation_input(lambda state: set_delta(state, -1))
 time.sleep(1)
 simulation.stop_simulation()
 
 for step in simulation.get_full_simulation():
     print(step)
+
+print(sensor_value)
 
 
 
