@@ -35,12 +35,12 @@ class TestPhysicsEngine(PhysicsEngine):
 
 
 simulation = Simulation(
-    mode=SimulationMode.ASYNC,
+    mode=SimulationMode.REALTIME,
     initial_environment_state=TestEnvironmentState(0),
     initial_robot_setpoint_state=TestRobotSetpointState(0),
     initial_robot_kinematic_state=TestRobotKinematicState(0),
     physics_engine=TestPhysicsEngine(),
-    delta_seconds=0.2,
+    delta_seconds=0.01,
     debug=True
 )
 
@@ -63,5 +63,6 @@ simulation.simulation_input(lambda state: set_delta(state, -1))
 time.sleep(1)
 simulation.stop_simulation()
 
+print(simulation.current_simulation_step)
 
 

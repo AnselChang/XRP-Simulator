@@ -135,14 +135,17 @@ class Simulation:
         """
 
         # Run the simulation in real-time
+        self.start_time = time.time()
+        timestep = 0
         while self.running:
-            # Execute the simulation step, recording the start time
-            self.start_time = time.time()
             self._execute_simulation_step()
             
             # Wait until the next simulation step
-            elapsed_time = time.time() - self.start_time
-            time.sleep(max(0, self.delta_seconds - elapsed_time))
+            timestep += 1
+            time_to_wait = self.start_time + timestep * self.delta_seconds - time.time()
+            if time_to_wait > 0:
+                time.sleep(time_to_wait)
+            
             
 
     def _catch_up_simulation(self):
