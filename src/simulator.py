@@ -1,6 +1,7 @@
 import dataclasses
 from typing import Callable
-import time
+import time, threading
+from enum import Enum
 
 """
 A constant state of the environment that the robot is in, which is fed into the physics engine.
@@ -59,21 +60,33 @@ class PhysicsEngine:
         raise NotImplementedError("PhysicsEngine must implement simulate method")
 
 
+class SimulationMode(Enum):
+    REALTIME = "REALTIME" # The simulation runs in real-time in a separate thread
+    ASYNC = "ASYNC" # The simulation runs in the same thread as the main program
+
 """
 Runs a simulation of the robot in the environment using the physics engine.
 """
 class Simulation:
 
     def __init__(self,
+        mode: SimulationMode,
         initial_environment_state: EnvironmentState,
         initial_robot_setpoint_state: RobotSetpointState,
         initial_robot_kinematic_state: RobotKinematicState,
         physics_engine: PhysicsEngine,
         delta_seconds: float, # The number of seconds between each simulation step
+        debug: bool = False
     ):
 
+        self.mode = mode
         self.environment_state = initial_environment_state
         self.physics_engine = physics_engine
+        self.debug = debug
+
+        self.running = False
+        self.has_started_running = False
+        self.realtime_simulation_thread = None
 
         # Initialize first timestep of the simulation
         self.simulation_steps = [SimulationStep(0, initial_robot_setpoint_state, initial_robot_kinematic_state)]
@@ -104,6 +117,27 @@ class Simulation:
             next_robot_kinematic_state
         ))
 
+        if self.debug:
+            print(self.current_simulation_step)
+
+    def _run_simulation_in_thread(self):
+        """
+        Run the simulation in a separate thread in real-time.
+        """
+        
+
+
+        # Run the simulation in real-time
+        while self.running:
+            # Execute the simulation step, recording the start time
+            self.start_time = time.time()
+            self._execute_simulation_step()
+            
+            # Wait until the next simulation step
+            elapsed_time = time.time() - self.start_time
+            time.sleep(max(0, self.delta_seconds - elapsed_time))
+            
+
     def _catch_up_simulation(self):
         """
         In the elapsed time since the last call to catch_up_simulation, execute as many simulation steps as necessary
@@ -132,7 +166,21 @@ class Simulation:
         """
         At the first catch_up_simulation call, all the steps from this point to the call will be simulated.
         """
-        self.last_clock_time = time.time()
+        if self.has_started_running:
+            raise Exception("Simulation cannot be started again after it has already started.")
+
+        self.has_started_running = True
+        self.running = True
+
+        if self.debug:
+            print(f"Starting simulation in {self.mode} mode.")
+
+        if self.mode == SimulationMode.REALTIME:
+            # Start the simulation in a separate thread
+            self.realtime_simulation_thread = threading.Thread(target=self._run_simulation_in_thread)
+            self.realtime_simulation_thread.start()
+        else:
+            self.last_clock_time = time.time()
     
     def simulation_input(self, input_function: Callable[[RobotSetpointState], None]):
         """
@@ -140,8 +188,9 @@ class Simulation:
         Executes all the previous simulation steps that would have happened before this input.
         """
 
-        # Catch up the simulation to the current time
-        self._catch_up_simulation()
+        if self.mode == SimulationMode.ASYNC:
+            # Catch up the simulation to the current time
+            self._catch_up_simulation()
 
         # Modify the setpoint state
         input_function(self.current_simulation_step.robot_setpoint_state)
@@ -152,8 +201,9 @@ class Simulation:
         Executes all the previous simulation steps that would have happened before this sensor read.
         """
 
-        # Catch up the simulation to the current time
-        self._catch_up_simulation()
+        if self.mode == SimulationMode.ASYNC:
+            # Catch up the simulation to the current time
+            self._catch_up_simulation()
 
         # Read the kinematic state
         return sensor_function(self.current_simulation_step.robot_kinematic_state)
@@ -162,8 +212,18 @@ class Simulation:
         """
         Stop the simulation and return the full simulation.
         """
-        # Simulate the remaining steps until the current time
-        self._catch_up_simulation()
+
+        self.running = False
+
+        if self.mode == SimulationMode.ASYNC:
+            # Simulate the remaining steps until the current time
+            self._catch_up_simulation()
+        else:
+            # Wait for the simulation thread to finish
+            self.realtime_simulation_thread.join()
+
+        if self.debug:
+            print("Simulation stopped.")
 
         return self.get_full_simulation()
 

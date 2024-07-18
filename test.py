@@ -1,4 +1,4 @@
-from src.simulator import EnvironmentState, PhysicsEngine, RobotKinematicState, RobotSetpointState, Simulation
+from src.simulator import EnvironmentState, PhysicsEngine, RobotKinematicState, RobotSetpointState, Simulation, SimulationMode
 
 from dataclasses import dataclass
 import time
@@ -35,11 +35,13 @@ class TestPhysicsEngine(PhysicsEngine):
 
 
 simulation = Simulation(
+    mode=SimulationMode.ASYNC,
     initial_environment_state=TestEnvironmentState(0),
     initial_robot_setpoint_state=TestRobotSetpointState(0),
     initial_robot_kinematic_state=TestRobotKinematicState(0),
     physics_engine=TestPhysicsEngine(),
-    delta_seconds=0.2
+    delta_seconds=0.2,
+    debug=True
 )
 
 def set_delta(state: TestRobotSetpointState, delta: int):
@@ -55,16 +57,11 @@ simulation.simulation_input(lambda state: set_delta(state, 4))
 simulation.simulation_input(lambda state: set_delta(state, 5))
 simulation.simulation_input(lambda state: set_delta(state, 2))
 time.sleep(1)
-sensor_value = simulation.simulation_sensor(lambda state: get_value(state))
+print("sensor:", simulation.simulation_sensor(lambda state: get_value(state)))
 time.sleep(1)
 simulation.simulation_input(lambda state: set_delta(state, -1))
 time.sleep(1)
 simulation.stop_simulation()
-
-for step in simulation.get_full_simulation():
-    print(step)
-
-print(sensor_value)
 
 
 
